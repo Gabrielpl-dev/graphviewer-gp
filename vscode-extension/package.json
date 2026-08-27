@@ -1,0 +1,54 @@
+{
+  "name": "graphviwer-gp",
+  "displayName": "graphviwer-gp",
+  "description": "Viewer ao vivo de execuções LangGraph, direto no VS Code",
+  "version": "0.0.1",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "graphviwerGp.openGraph",
+        "title": "graphviwer-gp: Abrir grafo"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "graphviwerGp.openGraph",
+          "when": "resourceFilename == langgraph.json",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "graphviwerGp",
+          "title": "graphviwer-gp",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "graphviwerGp": [
+        {
+          "id": "graphviwerGp.graphView",
+          "name": "Grafo",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}

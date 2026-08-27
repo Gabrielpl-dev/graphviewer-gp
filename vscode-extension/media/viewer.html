@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-__NONCE__'; connect-src http://127.0.0.1:*;">
+<title>graphviwer-gp</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #141922;
+    --border: #2a3140;
+    --text: #e6e9ef;
+    --muted: #8a93a6;
+    --idle: #232a38;
+    --active: #f5a524;
+    --done: #2ecc71;
+    --error: #e5484d;
+    --accent: #7c8cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-size: 12px;
+  }
+  #top {
+    flex: 1 1 55%;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+  }
+  #bottom {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    overflow-y: auto;
+  }
+  h1 { font-size: 11px; color: var(--muted); font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .04em; }
+  #graph-viewport {
+    position: relative;
+    flex: 1;
+    min-height: 140px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #0d1119;
+    cursor: grab;
+    margin-bottom: 8px;
+    background-image: radial-gradient(circle, #232a38 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  #graph-viewport.grabbing { cursor: grabbing; }
+  #graph {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    will-change: transform;
+  }
+  #graph-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+  #graph-controls button {
+    margin: 0;
+    background: var(--panel);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .node {
+    border: 1px solid var(--border);
+    background: var(--idle);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    min-width: 130px;
+    text-align: center;
+    font-size: 12px;
+    transition: all .15s ease;
+  }
+  .node.active { border-color: var(--active); background: #3a2a12; box-shadow: 0 0 0 3px rgba(245,165,36,.15); }
+  .node.done { border-color: var(--done); background: #12301f; }
+  .node.error { border-color: var(--error); background: #331416; }
+  .arrow { color: var(--muted); font-size: 14px; padding: 1px 0; }
+  form label { display: block; font-size: 11px; color: var(--muted); margin: 6px 0 4px; }
+  textarea, input[type=text] {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  textarea { min-height: 60px; resize: vertical; }
+  button {
+    margin-top: 8px;
+    background: var(--accent);
+    color: #10121a;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  #status { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .log-entry { border-bottom: 1px solid var(--border); padding: 6px 0; font-size: 11px; }
+  .log-entry .node-name { color: var(--accent); font-weight: 600; }
+  .log-entry pre { margin: 3px 0 0; white-space: pre-wrap; word-break: break-all; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div id="top">
+  <h1>Grafo</h1>
+  <div id="graph-viewport">
+    <div id="graph">aguardando conexão com o langgraph dev...</div>
+  </div>
+  <div id="graph-controls">
+    <button type="button" id="zoomIn">+</button>
+    <button type="button" id="zoomOut">−</button>
+    <button type="button" id="zoomReset">reset</button>
+  </div>
+  <form id="runForm">
+    <label>JSON de entrada</label>
+    <textarea id="inputJson">{"tarefa": "teste via extensão", "etapa": "s0"}</textarea>
+    <button type="submit" id="runBtn">rodar</button>
+    <div id="status"></div>
+  </form>
+</div>
+
+<div id="bottom">
+  <h1>Eventos ao vivo</h1>
+  <div id="log"></div>
+</div>
+
+<script nonce="__NONCE__">
+const $ = (sel) => document.querySelector(sel);
+let currentAssistantId = null;
+let nodeOrder = [];
+let baseUrl = null;
+
+async function loadGraph() {
+  const graphEl = $('#graph');
+  if (!baseUrl) {
+    graphEl.textContent = 'aguardando conexão com o langgraph dev...';
+    return;
+  }
+  graphEl.textContent = 'carregando grafo...';
+  try {
+    const assistants = await fetch(`${baseUrl}/assistants/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).then(r => r.json());
+
+    if (!assistants.length) {
+      graphEl.textContent = 'nenhum assistant encontrado no servidor.';
+      return;
+    }
+    currentAssistantId = assistants[0].assistant_id;
+
+    const graph = await fetch(`${baseUrl}/assistants/${currentAssistantId}/graph`).then(r => r.json());
+    const realNodes = graph.nodes.filter(n => n.id !== '__start__' && n.id !== '__end__');
+    nodeOrder = realNodes.map(n => n.id);
+
+    graphEl.innerHTML = '';
+    realNodes.forEach((n, i) => {
+      const box = document.createElement('div');
+      box.className = 'node';
+      box.id = `node-${n.id}`;
+      box.textContent = n.id;
+      graphEl.appendChild(box);
+      if (i < realNodes.length - 1) {
+        const arrow = document.createElement('div');
+        arrow.className = 'arrow';
+        arrow.textContent = '↓';
+        graphEl.appendChild(arrow);
+      }
+    });
+  } catch (e) {
+    graphEl.textContent = `erro carregando grafo: ${e.message}`;
+  }
+}
+
+function resetNodeStyles() {
+  nodeOrder.forEach(id => {
+    const el = document.getElementById(`node-${id}`);
+    if (el) el.className = 'node';
+  });
+}
+
+function markNode(id, cls) {
+  const el = document.getElementById(`node-${id}`);
+  if (el) el.className = `node ${cls}`;
+}
+
+function logEvent(nodeName, label, payload) {
+  const log = $('#log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="node-name"></span> — ${label}<pre></pre>`;
+  entry.querySelector('.node-name').textContent = nodeName;
+  entry.querySelector('pre').textContent = JSON.stringify(payload, null, 2);
+  log.prepend(entry);
+}
+
+async function runGraph(input) {
+  resetNodeStyles();
+  $('#log').innerHTML = '';
+  $('#runBtn').disabled = true;
+  $('#status').textContent = 'rodando...';
+
+  try {
+    const resp = await fetch(`${baseUrl}/runs/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assistant_id: currentAssistantId,
+        input,
+        stream_mode: ['events'],
+      }),
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+
+      const chunks = buffer.split('\n\n');
+      buffer = chunks.pop();
+
+      for (const chunk of chunks) {
+        const lines = chunk.split('\n');
+        const eventLine = lines.find(l => l.startsWith('event:'));
+        const dataLine = lines.find(l => l.startsWith('data:'));
+        if (!eventLine || !dataLine) continue;
+
+        const eventType = eventLine.replace('event:', '').trim();
+        const data = JSON.parse(dataLine.replace('data:', '').trim());
+
+        if (eventType !== 'events') continue;
+
+        const nodeName = data.metadata?.langgraph_node || data.name;
+        if (!nodeOrder.includes(nodeName)) continue;
+
+        if (data.event === 'on_chain_start') {
+          markNode(nodeName, 'active');
+          logEvent(nodeName, 'iniciou', data.data?.input ?? {});
+        } else if (data.event === 'on_chain_end') {
+          markNode(nodeName, 'done');
+          logEvent(nodeName, 'concluiu', data.data?.output ?? {});
+        }
+      }
+    }
+
+    $('#status').textContent = 'execução concluída.';
+  } catch (e) {
+    $('#status').textContent = `erro: ${e.message}`;
+  } finally {
+    $('#runBtn').disabled = false;
+  }
+}
+
+$('#runForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  let input;
+  try {
+    input = JSON.parse($('#inputJson').value);
+  } catch (e) {
+    $('#status').textContent = 'JSON de entrada inválido.';
+    return;
+  }
+  runGraph(input);
+});
+
+// --- pan & zoom ---
+const viewport = $('#graph-viewport');
+const graphEl = $('#graph');
+let scale = 1, panX = 30, panY = 16;
+let dragging = false, dragStartX = 0, dragStartY = 0, panStartX = 0, panStartY = 0;
+
+function applyTransform() {
+  graphEl.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+function clampScale(s) {
+  return Math.min(2.5, Math.max(0.3, s));
+}
+
+viewport.addEventListener('mousedown', (e) => {
+  dragging = true;
+  viewport.classList.add('grabbing');
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  panStartX = panX;
+  panStartY = panY;
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  panX = panStartX + (e.clientX - dragStartX);
+  panY = panStartY + (e.clientY - dragStartY);
+  applyTransform();
+});
+
+window.addEventListener('mouseup', () => {
+  dragging = false;
+  viewport.classList.remove('grabbing');
+});
+
+viewport.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = viewport.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  const prevScale = scale;
+  scale = clampScale(scale * (e.deltaY < 0 ? 1.1 : 0.9));
+  panX = cx - ((cx - panX) / prevScale) * scale;
+  panY = cy - ((cy - panY) / prevScale) * scale;
+  applyTransform();
+}, { passive: false });
+
+$('#zoomIn').addEventListener('click', () => { scale = clampScale(scale * 1.2); applyTransform(); });
+$('#zoomOut').addEventListener('click', () => { scale = clampScale(scale * 0.8); applyTransform(); });
+$('#zoomReset').addEventListener('click', () => { scale = 1; panX = 30; panY = 16; applyTransform(); });
+
+applyTransform();
+
+// --- recebe a baseUrl da extensão (sem input manual) ---
+window.addEventListener('message', (event) => {
+  const msg = event.data;
+  if (msg?.command === 'setBaseUrl') {
+    baseUrl = msg.url;
+    loadGraph();
+  }
+});
+</script>
+
+</body>
+</html>
