@@ -1,4 +1,4 @@
-# graphviwer-gp
+# graphviewer-gp
 
 Viewer nativo (Rust, egui/eframe) pra acompanhar execução de grafos LangGraph ao vivo — nasceu
 como alternativa self-hosted ao LangGraph Studio (que exige conta LangSmith só pra rodar uma

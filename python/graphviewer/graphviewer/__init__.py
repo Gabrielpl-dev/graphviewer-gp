@@ -1,4 +1,4 @@
-"""Marca funções como nós descobríveis pelo graphviwer-gp (SPEC-0)."""
+"""Marca funções como nós descobríveis pelo graphviewer-gp (SPEC-0)."""
 
 from __future__ import annotations
 
@@ -6,14 +6,14 @@ from typing import Callable, TypeVar
 
 F = TypeVar("F", bound=Callable)
 
-REGISTRY_ATTR = "__graphviwer_node__"
+REGISTRY_ATTR = "__graphviewer_node__"
 
 
 def node(name: str | None = None) -> Callable[[F], F]:
     """Decorator: marca a função como um nó descobrível pelo scanner.
 
     Não altera o comportamento da função em nada — só anexa metadado que o
-    scanner (`graphviwer.scanner`) lê depois via `inspect`.
+    scanner (`graphviewer.scanner`) lê depois via `inspect`.
     """
 
     def decorator(func: F) -> F:

@@ -2,7 +2,7 @@
 
 ## Contexto
 
-O graphviwer-gp começou como um viewer de execução (mostrar um grafo LangGraph já existente
+O graphviewer-gp começou como um viewer de execução (mostrar um grafo LangGraph já existente
 rodando). Esta spec cobre uma direção nova, maior: deixar de só **visualizar** um grafo pronto e
 passar a **construir** o grafo visualmente — não com um catálogo fixo de nós pré-feitos (like n8n),
 mas descobrindo automaticamente funções que você mesmo escreveu no seu código e deixando arrastar
@@ -34,7 +34,7 @@ código → posições visuais), não só escrever uma vez e esquecer.
 
 ## Mecanismo: função marcada → nó descoberto
 
-1. **Marcador**: um decorator `@graphviwer.node("nome_do_no")` (biblioteca Python leve, sem
+1. **Marcador**: um decorator `@graphviewer.node("nome_do_no")` (biblioteca Python leve, sem
    dependências pesadas) em cima de qualquer função do projeto.
 2. **Descoberta**: a extensão importa os módulos Python do projeto dentro do `.venv` já configurado
    (mesma convenção usada hoje pra rodar `langgraph dev`) e usa `inspect` pra achar as funções
@@ -69,7 +69,7 @@ assinatura da própria função (marcada no passo de descoberta).
 ## Decisões de design (resolvidas)
 
 1. **Metadado de posição — arquivo separado, sincronização forçada.** Posição X/Y de cada nó vive
-   em `.graphviwer/layout.json`, nunca como comentário dentro do `graph.py` gerado. Pra manter os
+   em `.graphviewer/layout.json`, nunca como comentário dentro do `graph.py` gerado. Pra manter os
    dois sempre em sincronia: todo nó tem um **ID estável** (não o nome da função — sobrevive a
    rename). A cada save do canvas, reconcilia os dois arquivos juntos: nó que sumiu do `.py` →
    remove do `layout.json`; nó novo sem posição salva → recebe posição default. Nunca existe um

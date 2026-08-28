@@ -1,6 +1,6 @@
 ARQUIVO TEMPORÁRIO — apagar ao concluir o roadmap (perguntar ao Gabriel antes).
 
-# Status: extensão VS Code do graphviwer-gp
+# Status: extensão VS Code do graphviewer-gp
 
 Plano completo em `~/.claude/plans/bora-planejar-dapper-lamport.md`. Este arquivo é só o
 checklist de execução + observações que não quero redescobrir se a sessão for resumida.
@@ -12,7 +12,7 @@ checklist de execução + observações que não quero redescobrir se a sessão 
 - [x] `media/viewer.html`: adaptar `~/dev/lg-demo/viewer.html` — CSP com nonce, `connect-src
       http://127.0.0.1:*`, layout vertical (grafo em cima, log embaixo), baseUrl vem de
       `postMessage` da extensão em vez de input manual
-- [x] `src/extension.ts`: `WebviewViewProvider`, comando `graphviwerGp.openGraph(uri)` que lê
+- [x] `src/extension.ts`: `WebviewViewProvider`, comando `graphviewerGp.openGraph(uri)` que lê
       `langgraph.json`, spawna `langgraph dev` do `.venv` do projeto, faz polling em `/ok`,
       manda a URL pro webview
 - [x] `npm install` em `vscode-extension/`
@@ -40,7 +40,7 @@ parsing estático, que a gente evita de propósito (quebra com grafo dinâmico/s
 
 ## Ideias maiores levantadas em 2026-08-27 (Gabriel, sem spec ainda)
 
-- [ ] **MCP server** — expor grafo/execução/schema do `graphviwer-gp` como servidor MCP, pra
+- [ ] **MCP server** — expor grafo/execução/schema do `graphviewer-gp` como servidor MCP, pra
       qualquer agente (Claude Code, ATLAS) consultar programaticamente, não só humano olhando
       webview. Direção confirmada (é o padrão que o Gabriel já usa — `vault-query-mcp`), mas ainda
       não desenhado: que tools expor, roda junto com a extensão ou separado.

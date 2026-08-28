@@ -1,21 +1,21 @@
-"""Exemplo mínimo pra testar o scanner do graphviwer — três funções marcadas."""
+"""Exemplo mínimo pra testar o scanner do graphviewer — três funções marcadas."""
 
-import graphviwer
+import graphviewer
 
 
-@graphviwer.node("scan")
+@graphviewer.node("scan")
 def s0_scan(state: dict) -> dict:
     """Faz o scan inicial do estado."""
     return {"etapa": "scan concluído"}
 
 
-@graphviwer.node("process")
+@graphviewer.node("process")
 def s1_process(state: dict) -> dict:
     """Processa o resultado do scan."""
     return {"etapa": "processado"}
 
 
-@graphviwer.node()
+@graphviewer.node()
 def s2_execute(state: dict) -> dict:
     return {"etapa": "executado"}
 

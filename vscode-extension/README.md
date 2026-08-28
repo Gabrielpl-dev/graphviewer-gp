@@ -1,4 +1,4 @@
-# graphviwer-gp
+# graphviewer-gp
 
 Viewer ao vivo de execuções [LangGraph](https://github.com/langchain-ai/langgraph), direto no VS Code — sem depender de conta na LangSmith.
 
@@ -8,12 +8,12 @@ Clique com o botão direito num `langgraph.json` no Explorer e o painel lateral 
 
 O [LangGraph Studio](https://github.com/langchain-ai/langgraph-studio) hospedado exige login mesmo pra rodar uma execução local. Esta extensão fala direto com a API REST/SSE do `langgraph dev` — que já roda 100% na sua máquina — sem passar por conta nenhuma.
 
-Diferente de ferramentas parecidas que fazem *parsing estático* do código pra descobrir o grafo (e quebram com grafos montados dinamicamente ou com subgrafos), o graphviwer-gp nunca lê o código-fonte: ele pergunta pro próprio servidor `langgraph dev` (`/assistants/{id}/graph`), então o que você vê é garantidamente o que vai executar.
+Diferente de ferramentas parecidas que fazem *parsing estático* do código pra descobrir o grafo (e quebram com grafos montados dinamicamente ou com subgrafos), o graphviewer-gp nunca lê o código-fonte: ele pergunta pro próprio servidor `langgraph dev` (`/assistants/{id}/graph`), então o que você vê é garantidamente o que vai executar.
 
 ## Uso
 
 1. Tenha um projeto LangGraph com `langgraph.json` e um `.venv` local com `langgraph-cli[inmem]` instalado (convenção padrão de qualquer projeto LangGraph rodando local).
-2. No Explorer do VS Code, clique com o botão direito no `langgraph.json` → **graphviwer-gp: Abrir grafo**.
+2. No Explorer do VS Code, clique com o botão direito no `langgraph.json` → **graphviewer-gp: Abrir grafo**.
 3. A extensão sobe o `langgraph dev` daquele projeto, espera ficar pronto e abre o painel com o grafo.
 4. Rode uma execução (pela sua aplicação, script, etc.) e acompanhe os nós acendendo em tempo real no painel.
 
@@ -29,4 +29,4 @@ Diferente de ferramentas parecidas que fazem *parsing estático* do código pra 
 
 ## Licença
 
-[MIT](https://github.com/Gabrielpl-dev/graphviwer-gp/blob/master/LICENSE)
+[MIT](https://github.com/Gabrielpl-dev/graphviewer-gp/blob/master/LICENSE)

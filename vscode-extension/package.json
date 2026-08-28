@@ -1,13 +1,13 @@
 {
-  "name": "graphviwer-gp",
-  "displayName": "graphviwer-gp",
+  "name": "graphviewer-gp",
+  "displayName": "graphviewer-gp",
   "description": "Viewer ao vivo de execuções LangGraph, direto no VS Code",
   "version": "0.0.1",
   "publisher": "gabrielpl-dev",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Gabrielpl-dev/graphviwer-gp.git"
+    "url": "https://github.com/Gabrielpl-dev/graphviewer-gp.git"
   },
   "engines": {
     "vscode": "^1.90.0"
@@ -20,14 +20,14 @@
   "contributes": {
     "commands": [
       {
-        "command": "graphviwerGp.openGraph",
-        "title": "graphviwer-gp: Abrir grafo"
+        "command": "graphviewerGp.openGraph",
+        "title": "graphviewer-gp: Abrir grafo"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "graphviwerGp.openGraph",
+          "command": "graphviewerGp.openGraph",
           "when": "resourceFilename == langgraph.json",
           "group": "navigation"
         }
@@ -36,16 +36,16 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "graphviwerGp",
-          "title": "graphviwer-gp",
+          "id": "graphviewerGp",
+          "title": "graphviewer-gp",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "graphviwerGp": [
+      "graphviewerGp": [
         {
-          "id": "graphviwerGp.graphView",
+          "id": "graphviewerGp.graphView",
           "name": "Grafo",
           "type": "webview"
         }

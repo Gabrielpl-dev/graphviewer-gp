@@ -11,7 +11,7 @@ const PORT = 2024;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 /** Webview fixo na Activity Bar — só guarda a referência pra poder mandar `postMessage`
- * depois que um grafo for aberto via o comando `graphviwerGp.openGraph`. */
+ * depois que um grafo for aberto via o comando `graphviewerGp.openGraph`. */
 class GraphViewProvider implements vscode.WebviewViewProvider {
   private view: vscode.WebviewView | undefined;
 
@@ -103,7 +103,7 @@ async function ensureGraphServerRunning(projectDir: string): Promise<boolean> {
   const bin = resolveLanggraphBin(projectDir);
   if (!bin) {
     vscode.window.showErrorMessage(
-      `graphviwer-gp: não achei ".venv" com langgraph instalado em ${projectDir}. ` +
+      `graphviewer-gp: não achei ".venv" com langgraph instalado em ${projectDir}. ` +
         `Configure o projeto igual em ~/dev/lg-demo antes de abrir por aqui.`,
     );
     return false;
@@ -123,13 +123,13 @@ async function ensureGraphServerRunning(projectDir: string): Promise<boolean> {
   const ok = await waitUntilHealthy(20_000);
   if (!ok) {
     vscode.window.showErrorMessage(
-      `graphviwer-gp: o langgraph dev não respondeu em ${BASE_URL}/ok depois de 20s.`,
+      `graphviewer-gp: o langgraph dev não respondeu em ${BASE_URL}/ok depois de 20s.`,
     );
   }
   return ok;
 }
 
-// --- SPEC-0: descoberta de nós via @graphviwer.node ---
+// --- SPEC-0: descoberta de nós via @graphviewer.node ---
 
 interface DiscoveredNode {
   name: string;
@@ -149,21 +149,21 @@ function resolvePythonBin(projectDir: string): string | undefined {
   return undefined;
 }
 
-/** Roda `python -m graphviwer.scanner <projectDir>` e parseia o JSON de nós descobertos.
- * Retorna `[]` (sem erro visível) se o pacote `graphviwer` não estiver instalado no `.venv`
+/** Roda `python -m graphviewer.scanner <projectDir>` e parseia o JSON de nós descobertos.
+ * Retorna `[]` (sem erro visível) se o pacote `graphviewer` não estiver instalado no `.venv`
  * do projeto — é uma feature nova opcional, não deve travar o fluxo de abrir o grafo. */
 async function discoverNodes(projectDir: string): Promise<DiscoveredNode[]> {
   const pythonBin = resolvePythonBin(projectDir);
   if (!pythonBin) return [];
 
   try {
-    const { stdout } = await execFileAsync(pythonBin, ["-m", "graphviwer.scanner", projectDir], {
+    const { stdout } = await execFileAsync(pythonBin, ["-m", "graphviewer.scanner", projectDir], {
       cwd: projectDir,
       timeout: 15_000,
     });
     return JSON.parse(stdout) as DiscoveredNode[];
   } catch (e) {
-    console.warn("graphviwer-gp: scanner de nós não rodou (pacote 'graphviwer' instalado?)", e);
+    console.warn("graphviewer-gp: scanner de nós não rodou (pacote 'graphviewer' instalado?)", e);
     return [];
   }
 }
@@ -172,8 +172,8 @@ export function activate(context: vscode.ExtensionContext): void {
   const provider = new GraphViewProvider(context.extensionUri);
 
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("graphviwerGp.graphView", provider),
-    vscode.commands.registerCommand("graphviwerGp.openGraph", async (uri: vscode.Uri) => {
+    vscode.window.registerWebviewViewProvider("graphviewerGp.graphView", provider),
+    vscode.commands.registerCommand("graphviewerGp.openGraph", async (uri: vscode.Uri) => {
       const projectDir = path.dirname(uri.fsPath);
       provider.reveal();
 

@@ -1,4 +1,4 @@
-"""Descobre funções marcadas com @graphviwer.node num diretório de projeto.
+"""Descobre funções marcadas com @graphviewer.node num diretório de projeto.
 
 Introspecção via import real (não parsing estático de AST) — ver SPEC-0, seção
 "Mecanismo": mais simples e mais preciso, ao custo de rodar o código do módulo
@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import REGISTRY_ATTR
 
-_SKIP_DIRS = {".venv", "venv", "node_modules", "__pycache__", ".git", ".graphviwer"}
+_SKIP_DIRS = {".venv", "venv", "node_modules", "__pycache__", ".git", ".graphviewer"}
 
 
 @dataclasses.dataclass
@@ -39,7 +39,7 @@ def _iter_python_files(root: Path):
 
 def _import_module_from_path(path: Path, root: Path):
     rel = path.relative_to(root).with_suffix("")
-    module_name = "graphviwer_scan." + ".".join(rel.parts)
+    module_name = "graphviewer_scan." + ".".join(rel.parts)
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
         return None
@@ -57,7 +57,7 @@ def discover(root_dir: str) -> list[DiscoveredNode]:
         try:
             module = _import_module_from_path(path, root)
         except Exception as e:  # projeto do usuário pode ter módulos que falham ao importar
-            print(f"[graphviwer] aviso: falha importando {path}: {e}", file=sys.stderr)
+            print(f"[graphviewer] aviso: falha importando {path}: {e}", file=sys.stderr)
             continue
         if module is None:
             continue

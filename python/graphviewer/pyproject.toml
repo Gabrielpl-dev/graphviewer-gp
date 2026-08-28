@@ -1,0 +1,12 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "graphviewer"
+version = "0.1.0"
+description = "Marca funções Python como nós descobríveis pelo graphviewer-gp"
+requires-python = ">=3.10"
+
+[project.scripts]
+graphviewer-scan = "graphviewer.scanner:main"
