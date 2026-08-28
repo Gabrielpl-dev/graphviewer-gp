@@ -18,20 +18,24 @@ o que você vê é garantidamente o que vai executar.
 
 ## O que tem aqui
 
-Três frentes:
+O repo é organizado por **assunto** (visualização de grafos LangGraph), não por um monólito só —
+`app/` e `vscode-extension/` são dois projetos separados, sem acoplamento nenhum entre si (nenhum
+dos dois importa código do outro). Se um dia escalar o suficiente pra justificar, cada um vira
+repo próprio; por enquanto convivem no mesmo lugar porque tratam do mesmo problema.
 
-- **`vscode-extension/`** — extensão VS Code. Clica com botão direito num `langgraph.json` no
-  Explorer → sobe o `langgraph dev` daquele projeto → abre um painel lateral com o grafo e o log de
-  eventos ao vivo. Já mostra também uma lista dos nós descobertos via `@graphviewer.node` (ver
-  abaixo), ainda não arrastável. **Funcional (v1 do viewer).**
+- **`vscode-extension/`** — extensão VS Code (TypeScript). Clica com botão direito num
+  `langgraph.json` no Explorer → sobe o `langgraph dev` daquele projeto → abre um painel lateral
+  com o grafo e o log de eventos ao vivo. Já mostra também uma lista dos nós descobertos via
+  `@graphviewer.node` (ver abaixo), ainda não arrastável. **Funcional (v1 do viewer).**
 - **`python/graphviewer/`** — pacote Python com o decorator `@graphviewer.node("nome")`, que marca
   qualquer função como um nó descobrível, e um scanner que importa o projeto de verdade (via
-  `inspect`, não parsing de AST) e acha essas funções. É a base do próximo passo: autoria visual.
-- **`crates/`** — app nativo em Rust (egui/eframe), pra quem quer um executável separado em vez de
+  `inspect`, não parsing de AST) e acha essas funções. Usado pela extensão VS Code (leitura, sem
+  acoplamento reverso).
+- **`app/`** — app nativo em Rust (egui/eframe), pra quem quer um executável separado em vez de
   depender do VS Code. Motivo de existir também: falso positivo de antivírus corporativo com
   binário Rust não assinado atrapalhou a extensão em algum momento, então a versão nativa é a
   alternativa que não depende do VS Code estar aberto. **Ainda no início** — arquitetura em
-  camadas (`graph-model` / `langgraph-client` / `ui`) desenhada, só a janela vazia (`crates/ui`)
+  camadas (`graph-model` / `langgraph-client` / `ui`) desenhada, só a janela vazia (`app/crates/ui`)
   está pronta.
 
 ## Pra onde isso vai (SPEC-0)
@@ -44,9 +48,10 @@ próprio código (`@graphviewer.node`) e deixando arrastar elas num canvas, sem 
 [`specs/SPEC-0-node-canvas.md`](specs/SPEC-0-node-canvas.md); progresso em
 [`specs/STATUS-node-canvas.md`](specs/STATUS-node-canvas.md).
 
-Ideia relacionada, ainda sem spec própria: expor grafo/execução/schema como **servidor MCP**, pra
-qualquer agente (Claude Code, ATLAS) consultar programaticamente em vez de depender de um humano
-olhando o webview — registrado em [`vscode-extension/STATUS.md`](vscode-extension/STATUS.md).
+Ideia relacionada, com spec própria em andamento: expor grafo/execução/schema como **servidor
+MCP** (`vscode-extension/mcp-server/`), pra qualquer agente (Claude Code, ATLAS) consultar
+programaticamente em vez de depender de um humano olhando o webview — ver
+[`specs/SPEC-1-mcp-server.md`](specs/SPEC-1-mcp-server.md).
 
 ## Rodando a extensão VS Code
 
@@ -68,6 +73,7 @@ alvo e marque funções com `@graphviewer.node("nome")` — elas aparecem listad
 ## Rodando o app nativo (Rust)
 
 ```
+cd app
 cargo run -p ui
 ```
 

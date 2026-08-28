@@ -10,7 +10,7 @@ só a solução que você imaginou — às vezes tem um jeito mais simples de ch
 ## Pull requests
 
 - Um PR, uma mudança lógica — evita misturar refatoração com feature nova.
-- Se mexer no lado Rust (`crates/`): `cargo check` (ou `cargo build`) tem que passar sem erro antes
+- Se mexer no lado Rust (`app/`): `cargo check` (ou `cargo build`) tem que passar sem erro antes
   do PR.
 - Se mexer na extensão (`vscode-extension/`): `npm run compile` tem que passar sem erro.
 - Se mexer no pacote Python (`python/graphviewer/`): roda o scanner contra `examples/` e confirma
@@ -25,7 +25,11 @@ só a solução que você imaginou — às vezes tem um jeito mais simples de ch
 - **Extensão VS Code**: o webview fala com o `langgraph dev` local diretamente (fetch/SSE) — a
   extensão só gerencia o processo do servidor e a URL, não faz proxy dos dados.
 - **App Rust**: arquitetura em camadas (crates separados) pra mudar UI sem recompilar o cliente
-  HTTP. Ver `crates/ui`, `crates/graph-model`, `crates/langgraph-client` conforme forem existindo.
+  HTTP. Ver `app/crates/ui`, `app/crates/graph-model`, `app/crates/langgraph-client` conforme forem
+  existindo.
+- **Sem acoplamento entre `app/` e `vscode-extension/`**: são dois projetos separados no mesmo
+  repo (organizado por assunto, não por monólito) — nenhum importa código do outro. Se escalar o
+  suficiente, viram repos separados.
 - **Descoberta de nós (SPEC-0)**: funções viram nó marcando com `@graphviewer.node(...)`, achadas
   via introspecção real (`inspect`, importando o módulo) — não parsing de AST, mesmo princípio do
   ponto acima aplicado ao código do usuário, não só ao grafo.

@@ -27,7 +27,7 @@ código → posições visuais), não só escrever uma vez e esquecer.
 
 - **Só Python.** Cobre o que já existe (ATLAS, PI, langgraph-client) sem esforço de parsing
   multi-linguagem. Poliglota (TS, Rust, etc.) fica pra depois de provar que o mecanismo funciona.
-- **Vive na extensão VS Code**, não no app nativo Rust (`crates/ui`). Motivo: essa feature depende de
+- **Vive na extensão VS Code**, não no app nativo Rust (`app/crates/ui`). Motivo: essa feature depende de
   ler/escrever arquivos no workspace aberto e mostrar um editor de texto lado a lado com o canvas —
   é literalmente o forte do VS Code, e o app Rust não tem painel de editor. O app nativo Rust
   continua existindo só como viewer de execução (escopo antigo, sem mudança aqui).
@@ -90,4 +90,4 @@ assinatura da própria função (marcada no passo de descoberta).
 - Poliglota (TS/Rust/etc. como linguagem de nó).
 - MCP (expor os nós/grafo como tools pra outros agentes) — ideia relacionada, registrada em
   `vscode-extension/STATUS.md`, mas é uma spec própria depois que esta aqui estiver rodando.
-- Qualquer mudança no app nativo Rust (`crates/ui`).
+- Qualquer mudança no app nativo Rust (`app/crates/ui`).
