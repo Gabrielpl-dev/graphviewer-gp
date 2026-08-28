@@ -20,10 +20,31 @@ Spec completa em `specs/SPEC-0-node-canvas.md`. Este arquivo é só o checklist 
 - [x] **Lista dos nós descobertos no webview** — `viewer.html`: seção `#palette`, mensagem
       `setDiscoveredNodes`, renderiza nome/assinatura/docstring. **Ainda não é arrastável** — é
       só lista por enquanto; drag-and-drop pro canvas fica pro próximo passo.
-- [ ] **Modo Editar vs Observar** — toggle no `viewer.html` (decisão 3 da spec)
-- [ ] **Codegen** — canvas → `graph.py` (`StateGraph`/`add_node`/`add_edge`)
+- [x] **Modo Editar vs Observar** — toggle no `viewer.html` (decisão 3 da spec). Editar: arrasta
+      função da paleta pro canvas (posição vira nó), clica em dois nós pra criar aresta (ordem, não
+      pino de dado — como a spec define). Estado de autoria (`authoredNodes`/`authoredEdges`)
+      sobrevive trocar de aba. **Ainda não testado manualmente no VS Code de verdade** — só
+      validado sintaxe (`node --check`) e revisão de código, falta clicar de verdade.
+- [~] **Codegen** — botão "ver código gerado" já produz o Python (`StateGraph`/`add_node`/
+      `add_edge`/`add_conditional_edges`... ainda sem condicional) a partir do grafo desenhado, mas
+      **só mostra em preview** — não escreve `graph.py` no disco, não sabe o import real da função
+      (assume que já tá no mesmo arquivo), e o `State` fica com `...` placeholder. Falta: escrever
+      de fato (via extensão, que tem acesso a filesystem) e inferir/mapear os imports certos.
 - [ ] **`.graphviewer/layout.json`** — posição X/Y por ID estável de nó, sincronizado com o `.py`
+      (hoje a posição só existe em memória do webview, se perde ao fechar o painel)
 - [ ] **Merge de 3 vias** — base (última geração) vs. disco (edição manual) vs. canvas novo
+
+## Bug real encontrado e corrigido (2026-08-28)
+
+Paleta não aparecia mesmo com `graphviewer` instalado. Causa: `provider.reveal()` chamava
+`this.view?.show?.(true)` — mas `this.view` só existe depois que o VS Code chama
+`resolveWebviewView`, que só acontece quando o painel já foi mostrado pelo menos uma vez na sessão.
+Na primeira abertura, `setBaseUrl`/`setDiscoveredNodes` mandavam a mensagem pro vazio (webview nem
+existia ainda). Corrigido: `ensureResolved()` usa o comando auto-gerado
+`graphviewerGp.graphView.focus` (força o VS Code a resolver o webview) antes de mandar qualquer
+mensagem. Também adicionado `retainContextWhenHidden: true` — sem isso, o VS Code descartava o
+conteúdo do painel toda vez que ele ficava escondido (perderia o estado de autoria do canvas ao
+trocar de aba). **Ainda não confirmado pelo Gabriel que resolveu de verdade** — próximo teste.
 
 ## Observações
 
