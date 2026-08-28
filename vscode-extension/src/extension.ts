@@ -2,7 +2,10 @@ import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
-import { ChildProcess, spawn } from "node:child_process";
+import { ChildProcess, spawn, execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const PORT = 2024;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
@@ -22,6 +25,10 @@ class GraphViewProvider implements vscode.WebviewViewProvider {
 
   setBaseUrl(url: string): void {
     this.view?.webview.postMessage({ command: "setBaseUrl", url });
+  }
+
+  setDiscoveredNodes(nodes: DiscoveredNode[]): void {
+    this.view?.webview.postMessage({ command: "setDiscoveredNodes", nodes });
   }
 
   reveal(): void {
@@ -122,6 +129,45 @@ async function ensureGraphServerRunning(projectDir: string): Promise<boolean> {
   return ok;
 }
 
+// --- SPEC-0: descoberta de nós via @graphviwer.node ---
+
+interface DiscoveredNode {
+  name: string;
+  function: string;
+  module: string;
+  file: string;
+  line: number;
+  signature: string;
+  docstring: string | null;
+}
+
+function resolvePythonBin(projectDir: string): string | undefined {
+  const winBin = path.join(projectDir, ".venv", "Scripts", "python.exe");
+  const nixBin = path.join(projectDir, ".venv", "bin", "python");
+  if (fs.existsSync(winBin)) return winBin;
+  if (fs.existsSync(nixBin)) return nixBin;
+  return undefined;
+}
+
+/** Roda `python -m graphviwer.scanner <projectDir>` e parseia o JSON de nós descobertos.
+ * Retorna `[]` (sem erro visível) se o pacote `graphviwer` não estiver instalado no `.venv`
+ * do projeto — é uma feature nova opcional, não deve travar o fluxo de abrir o grafo. */
+async function discoverNodes(projectDir: string): Promise<DiscoveredNode[]> {
+  const pythonBin = resolvePythonBin(projectDir);
+  if (!pythonBin) return [];
+
+  try {
+    const { stdout } = await execFileAsync(pythonBin, ["-m", "graphviwer.scanner", projectDir], {
+      cwd: projectDir,
+      timeout: 15_000,
+    });
+    return JSON.parse(stdout) as DiscoveredNode[];
+  } catch (e) {
+    console.warn("graphviwer-gp: scanner de nós não rodou (pacote 'graphviwer' instalado?)", e);
+    return [];
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new GraphViewProvider(context.extensionUri);
 
@@ -135,6 +181,9 @@ export function activate(context: vscode.ExtensionContext): void {
       if (ok) {
         provider.setBaseUrl(BASE_URL);
       }
+
+      const nodes = await discoverNodes(projectDir);
+      provider.setDiscoveredNodes(nodes);
     }),
   );
 }
