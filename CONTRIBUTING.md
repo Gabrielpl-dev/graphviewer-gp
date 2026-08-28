@@ -28,8 +28,8 @@ só a solução que você imaginou — às vezes tem um jeito mais simples de ch
 - **Extensão VS Code**: o webview fala com o `langgraph dev` local diretamente (fetch/SSE) — a
   extensão só gerencia o processo do servidor e a URL, não faz proxy dos dados.
 - **App Rust**: arquitetura em camadas (crates separados) pra mudar UI sem recompilar o cliente
-  HTTP. Ver `app/crates/ui`, `app/crates/graph-model`, `app/crates/langgraph-client` conforme forem
-  existindo.
+  HTTP — `app/crates/graph-model` (tipos), `app/crates/langgraph-client` (HTTP/SSE),
+  `app/crates/ui` (egui).
 - **Sem acoplamento entre `app/` e `vscode-extension/`**: são dois projetos separados no mesmo
   repo (organizado por assunto, não por monólito) — nenhum importa código do outro. Se escalar o
   suficiente, viram repos separados.

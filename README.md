@@ -34,9 +34,9 @@ repo próprio; por enquanto convivem no mesmo lugar porque tratam do mesmo probl
 - **`app/`** — app nativo em Rust (egui/eframe), pra quem quer um executável separado em vez de
   depender do VS Code. Motivo de existir também: falso positivo de antivírus corporativo com
   binário Rust não assinado atrapalhou a extensão em algum momento, então a versão nativa é a
-  alternativa que não depende do VS Code estar aberto. **Ainda no início** — arquitetura em
-  camadas (`graph-model` / `langgraph-client` / `ui`) desenhada, só a janela vazia (`app/crates/ui`)
-  está pronta.
+  alternativa que não depende do VS Code estar aberto. Arquitetura em camadas: `graph-model`
+  (tipos compartilhados), `langgraph-client` (HTTP/SSE) e `ui` (egui — canvas com pan/zoom, log de
+  eventos). **Funcional** — carrega grafo, roda execução, acompanha nó a nó ao vivo.
 - **`vscode-extension/mcp-server/`** — servidor MCP: expõe grafo/execução/schema como tools
   (`list_discovered_nodes`, `get_graph_structure`, `run_graph`, `stream_run_events`), pra qualquer
   agente (Claude Code, ATLAS) consultar programaticamente em vez de depender de um humano olhando o

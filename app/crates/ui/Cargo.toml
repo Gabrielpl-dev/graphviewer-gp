@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 eframe = "0.32"
 egui = "0.32"
+graph-model = { path = "../graph-model" }
+langgraph-client = { path = "../langgraph-client" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
+serde_json = "1"
