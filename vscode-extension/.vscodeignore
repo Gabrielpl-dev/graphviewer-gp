@@ -1,0 +1,8 @@
+.vscodeignore
+STATUS.md
+tsconfig.json
+src/**
+node_modules/**
+*.vsix
+**/*.map
+.gitignore
