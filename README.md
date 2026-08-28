@@ -37,6 +37,12 @@ repo próprio; por enquanto convivem no mesmo lugar porque tratam do mesmo probl
   alternativa que não depende do VS Code estar aberto. **Ainda no início** — arquitetura em
   camadas (`graph-model` / `langgraph-client` / `ui`) desenhada, só a janela vazia (`app/crates/ui`)
   está pronta.
+- **`vscode-extension/mcp-server/`** — servidor MCP: expõe grafo/execução/schema como tools
+  (`list_discovered_nodes`, `get_graph_structure`, `run_graph`, `stream_run_events`), pra qualquer
+  agente (Claude Code, ATLAS) consultar programaticamente em vez de depender de um humano olhando o
+  webview. Só mais um cliente da API REST/SSE do `langgraph dev` — não inventa transporte novo.
+  **Funcional** — testado ponta a ponta contra um projeto real, sem abrir VS Code. Ver
+  [`specs/SPEC-1-mcp-server.md`](specs/SPEC-1-mcp-server.md).
 
 ## Pra onde isso vai (SPEC-0)
 
@@ -47,11 +53,6 @@ próprio código (`@graphviewer.node`) e deixando arrastar elas num canvas, sem 
 é rei) e sabe reler um grafo já gerado ao reabrir. Detalhes e decisões de design completos em
 [`specs/SPEC-0-node-canvas.md`](specs/SPEC-0-node-canvas.md); progresso em
 [`specs/STATUS-node-canvas.md`](specs/STATUS-node-canvas.md).
-
-Ideia relacionada, com spec própria em andamento: expor grafo/execução/schema como **servidor
-MCP** (`vscode-extension/mcp-server/`), pra qualquer agente (Claude Code, ATLAS) consultar
-programaticamente em vez de depender de um humano olhando o webview — ver
-[`specs/SPEC-1-mcp-server.md`](specs/SPEC-1-mcp-server.md).
 
 ## Rodando a extensão VS Code
 

@@ -15,6 +15,9 @@ só a solução que você imaginou — às vezes tem um jeito mais simples de ch
 - Se mexer na extensão (`vscode-extension/`): `npm run compile` tem que passar sem erro.
 - Se mexer no pacote Python (`python/graphviewer/`): roda o scanner contra `examples/` e confirma
   que ainda acha as funções marcadas (`python -m graphviewer.scanner examples`).
+- Se mexer no servidor MCP (`vscode-extension/mcp-server/`): instala isolado (`pip install -e
+  vscode-extension/mcp-server`) e testa as 4 tools contra um projeto LangGraph real — sem precisar
+  abrir VS Code.
 - Explica o *porquê* da mudança na descrição do PR, não só o que mudou — o diff já mostra o que
   mudou.
 
@@ -36,6 +39,9 @@ só a solução que você imaginou — às vezes tem um jeito mais simples de ch
 - **Código é rei**: o canvas de autoria (SPEC-0) gera Python real e nunca é fonte da verdade
   sozinho — sempre precisa dar pra ler/editar o `.py` gerado fora do canvas. Ver
   [`specs/SPEC-0-node-canvas.md`](specs/SPEC-0-node-canvas.md) pras decisões completas.
+- **Servidor MCP** (`vscode-extension/mcp-server/`): é só mais um cliente da API REST/SSE do
+  `langgraph dev`, igual o webview e o app Rust já são — não inventa transporte novo, não duplica o
+  motor de grafo. Ver [`specs/SPEC-1-mcp-server.md`](specs/SPEC-1-mcp-server.md).
 
 Se você acha que uma dessas decisões tá errada, abre uma issue explicando o caso antes de mandar o
 PR — economiza retrabalho dos dois lados.
