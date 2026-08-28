@@ -124,11 +124,28 @@
   .log-entry { border-bottom: 1px solid var(--border); padding: 6px 0; font-size: 11px; }
   .log-entry .node-name { color: var(--accent); font-weight: 600; }
   .log-entry pre { margin: 3px 0 0; white-space: pre-wrap; word-break: break-all; color: var(--muted); }
+  #palette { margin-bottom: 8px; }
+  #palette-list { display: flex; flex-direction: column; gap: 4px; }
+  #palette-empty { color: var(--muted); font-size: 11px; }
+  .palette-item {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .palette-item .fn-name { color: var(--accent); font-weight: 600; }
+  .palette-item .fn-sig { color: var(--muted); }
+  .palette-item .fn-doc { color: var(--muted); margin-top: 2px; }
 </style>
 </head>
 <body>
 
 <div id="top">
+  <div id="palette">
+    <h1>Nós descobertos (@graphviwer.node)</h1>
+    <div id="palette-empty">nenhum ainda — precisa do pacote "graphviwer" instalado no .venv do projeto.</div>
+    <div id="palette-list"></div>
+  </div>
   <h1>Grafo</h1>
   <div id="graph-viewport">
     <div id="graph">aguardando conexão com o langgraph dev...</div>
@@ -354,8 +371,35 @@ window.addEventListener('message', (event) => {
   if (msg?.command === 'setBaseUrl') {
     baseUrl = msg.url;
     loadGraph();
+  } else if (msg?.command === 'setDiscoveredNodes') {
+    renderPalette(msg.nodes ?? []);
   }
 });
+
+function renderPalette(nodes) {
+  const list = $('#palette-list');
+  const empty = $('#palette-empty');
+  list.innerHTML = '';
+
+  if (!nodes.length) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  for (const n of nodes) {
+    const item = document.createElement('div');
+    item.className = 'palette-item';
+    item.innerHTML = `
+      <div><span class="fn-name"></span> <span class="fn-sig"></span></div>
+      <div class="fn-doc"></div>
+    `;
+    item.querySelector('.fn-name').textContent = n.name;
+    item.querySelector('.fn-sig').textContent = n.signature;
+    item.querySelector('.fn-doc').textContent = n.docstring ?? `${n.file}:${n.line}`;
+    list.appendChild(item);
+  }
+}
 </script>
 
 </body>
