@@ -136,6 +136,39 @@
   .palette-item .fn-name { color: var(--accent); font-weight: 600; }
   .palette-item .fn-sig { color: var(--muted); }
   .palette-item .fn-doc { color: var(--muted); margin-top: 2px; }
+  .palette-item[draggable="true"] { cursor: grab; }
+  .palette-item[draggable="true"]:active { cursor: grabbing; }
+  #mode-toggle { display: flex; gap: 4px; margin-bottom: 8px; }
+  #mode-toggle button {
+    margin: 0;
+    background: var(--panel);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  #mode-toggle button.active { background: var(--accent); color: #10121a; border-color: var(--accent); }
+  .authored-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    user-select: none;
+  }
+  .authored-node.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,140,255,.25); }
+  #edges-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+  #code-preview {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    margin-top: 8px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
 </style>
 </head>
 <body>
@@ -146,6 +179,10 @@
     <div id="palette-empty">nenhum ainda — precisa do pacote "graphviewer" instalado no .venv do projeto.</div>
     <div id="palette-list"></div>
   </div>
+  <div id="mode-toggle">
+    <button type="button" id="modeObservar" class="active">Observar</button>
+    <button type="button" id="modeEditar">Editar</button>
+  </div>
   <h1>Grafo</h1>
   <div id="graph-viewport">
     <div id="graph">aguardando conexão com o langgraph dev...</div>
@@ -154,7 +191,9 @@
     <button type="button" id="zoomIn">+</button>
     <button type="button" id="zoomOut">−</button>
     <button type="button" id="zoomReset">reset</button>
+    <button type="button" id="verCodigo" style="display:none;">ver código gerado</button>
   </div>
+  <pre id="code-preview"></pre>
   <form id="runForm">
     <label>JSON de entrada</label>
     <textarea id="inputJson">{"tarefa": "teste via extensão", "etapa": "s0"}</textarea>
@@ -376,7 +415,10 @@ window.addEventListener('message', (event) => {
   }
 });
 
+let discoveredNodesData = [];
+
 function renderPalette(nodes) {
+  discoveredNodesData = nodes;
   const list = $('#palette-list');
   const empty = $('#palette-empty');
   list.innerHTML = '';
@@ -387,9 +429,10 @@ function renderPalette(nodes) {
   }
   empty.style.display = 'none';
 
-  for (const n of nodes) {
+  nodes.forEach((n, idx) => {
     const item = document.createElement('div');
     item.className = 'palette-item';
+    item.draggable = mode === 'editar';
     item.innerHTML = `
       <div><span class="fn-name"></span> <span class="fn-sig"></span></div>
       <div class="fn-doc"></div>
@@ -397,9 +440,200 @@ function renderPalette(nodes) {
     item.querySelector('.fn-name').textContent = n.name;
     item.querySelector('.fn-sig').textContent = n.signature;
     item.querySelector('.fn-doc').textContent = n.docstring ?? `${n.file}:${n.line}`;
+    item.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', String(idx));
+    });
     list.appendChild(item);
+  });
+}
+
+function refreshPaletteDraggable() {
+  document.querySelectorAll('.palette-item').forEach((el) => {
+    el.draggable = mode === 'editar';
+  });
+}
+
+// --- SPEC-0: modo Editar — arrastar função da paleta pro canvas, conectar clicando ---
+
+let mode = 'observar';
+let authoredNodes = [];       // {id, name, function, module}
+let authoredEdges = [];       // {from, to}
+let authoredPositions = {};   // id -> {x, y} em espaço do grafo (antes do pan/zoom)
+let authoredIdCounter = 0;
+let pendingEdgeFrom = null;
+
+function setMode(newMode) {
+  mode = newMode;
+  $('#modeObservar').classList.toggle('active', mode === 'observar');
+  $('#modeEditar').classList.toggle('active', mode === 'editar');
+  $('#runForm').style.display = mode === 'observar' ? 'block' : 'none';
+  $('#verCodigo').style.display = mode === 'editar' ? 'inline-block' : 'none';
+  $('#code-preview').style.display = 'none';
+  refreshPaletteDraggable();
+
+  if (mode === 'observar') {
+    loadGraph();
+  } else {
+    renderEditorCanvas();
   }
 }
+
+$('#modeObservar').addEventListener('click', () => setMode('observar'));
+$('#modeEditar').addEventListener('click', () => setMode('editar'));
+
+viewport.addEventListener('dragover', (e) => {
+  if (mode !== 'editar') return;
+  e.preventDefault();
+});
+
+viewport.addEventListener('drop', (e) => {
+  if (mode !== 'editar') return;
+  e.preventDefault();
+
+  const idx = Number(e.dataTransfer.getData('text/plain'));
+  const fnData = discoveredNodesData[idx];
+  if (!fnData) return;
+
+  const rect = viewport.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  const gx = (cx - panX) / scale;
+  const gy = (cy - panY) / scale;
+
+  const id = `n${authoredIdCounter++}`;
+  authoredNodes.push({ id, name: fnData.name, function: fnData.function, module: fnData.module });
+  authoredPositions[id] = { x: gx, y: gy };
+  renderEditorCanvas();
+});
+
+function handleAuthoredNodeClick(id) {
+  if (pendingEdgeFrom === null) {
+    pendingEdgeFrom = id;
+  } else if (pendingEdgeFrom === id) {
+    pendingEdgeFrom = null;
+  } else {
+    authoredEdges.push({ from: pendingEdgeFrom, to: id });
+    pendingEdgeFrom = null;
+  }
+  renderEditorCanvas();
+}
+
+function renderEditorCanvas() {
+  graphEl.innerHTML = '';
+
+  if (!authoredNodes.length) {
+    const hint = document.createElement('div');
+    hint.style.color = 'var(--muted)';
+    hint.textContent = 'arraste uma função da paleta pra cá pra começar';
+    graphEl.appendChild(hint);
+    return;
+  }
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('id', 'edges-svg');
+  svg.setAttribute('width', '2000');
+  svg.setAttribute('height', '2000');
+
+  const defs = document.createElementNS(svgNS, 'defs');
+  const marker = document.createElementNS(svgNS, 'marker');
+  marker.setAttribute('id', 'arrowhead');
+  marker.setAttribute('markerWidth', '8');
+  marker.setAttribute('markerHeight', '8');
+  marker.setAttribute('refX', '7');
+  marker.setAttribute('refY', '4');
+  marker.setAttribute('orient', 'auto');
+  const arrowPath = document.createElementNS(svgNS, 'path');
+  arrowPath.setAttribute('d', 'M0,0 L8,4 L0,8 Z');
+  arrowPath.setAttribute('fill', '#5a6273');
+  marker.appendChild(arrowPath);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  authoredEdges.forEach((edge) => {
+    const from = authoredPositions[edge.from];
+    const to = authoredPositions[edge.to];
+    if (!from || !to) return;
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', from.x);
+    line.setAttribute('y1', from.y);
+    line.setAttribute('x2', to.x);
+    line.setAttribute('y2', to.y);
+    line.setAttribute('stroke', '#5a6273');
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('marker-end', 'url(#arrowhead)');
+    svg.appendChild(line);
+  });
+
+  graphEl.appendChild(svg);
+
+  authoredNodes.forEach((n) => {
+    const pos = authoredPositions[n.id];
+    const box = document.createElement('div');
+    box.className = 'node authored-node';
+    if (pendingEdgeFrom === n.id) box.classList.add('selected');
+    box.style.left = `${pos.x}px`;
+    box.style.top = `${pos.y}px`;
+    box.textContent = n.name;
+    box.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleAuthoredNodeClick(n.id);
+    });
+    graphEl.appendChild(box);
+  });
+}
+
+graphEl.addEventListener('click', (e) => {
+  if (mode !== 'editar') return;
+  if (e.target === graphEl || e.target.id === 'edges-svg') {
+    if (pendingEdgeFrom !== null) {
+      pendingEdgeFrom = null;
+      renderEditorCanvas();
+    }
+  }
+});
+
+/** Geração de código — só preview por enquanto (não escreve arquivo ainda, ver
+ * specs/STATUS-node-canvas.md). Import real e inferência do State ficam pro próximo passo. */
+function generateCode() {
+  const lines = [
+    'from typing import TypedDict',
+    'from langgraph.graph import StateGraph, START, END',
+    '',
+    'class State(TypedDict):',
+    '    ...  # TODO: inferir campos a partir das assinaturas dos nós',
+    '',
+    'graph_builder = StateGraph(State)',
+  ];
+
+  authoredNodes.forEach((n) => {
+    lines.push(`graph_builder.add_node("${n.name}", ${n.function})`);
+  });
+  lines.push('');
+
+  const hasIncoming = new Set(authoredEdges.map((e) => e.to));
+  authoredNodes.filter((n) => !hasIncoming.has(n.id)).forEach((n) => {
+    lines.push(`graph_builder.add_edge(START, "${n.name}")`);
+  });
+
+  authoredEdges.forEach((e) => {
+    const from = authoredNodes.find((n) => n.id === e.from);
+    const to = authoredNodes.find((n) => n.id === e.to);
+    if (from && to) lines.push(`graph_builder.add_edge("${from.name}", "${to.name}")`);
+  });
+
+  const hasOutgoing = new Set(authoredEdges.map((e) => e.from));
+  authoredNodes.filter((n) => !hasOutgoing.has(n.id)).forEach((n) => {
+    lines.push(`graph_builder.add_edge("${n.name}", END)`);
+  });
+
+  lines.push('', 'graph = graph_builder.compile()');
+
+  $('#code-preview').textContent = lines.join('\n');
+  $('#code-preview').style.display = 'block';
+}
+
+$('#verCodigo').addEventListener('click', generateCode);
 </script>
 
 </body>
