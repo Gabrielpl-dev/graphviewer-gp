@@ -2,3 +2,8 @@
 vscode-extension/node_modules/
 vscode-extension/out/
 *.vsix
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
