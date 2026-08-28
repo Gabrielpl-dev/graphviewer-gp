@@ -38,6 +38,22 @@ Ideias vale a pena copiar (conceito, não código — os três são parsing est�
 Fora de escopo, não vale copiar: "jump to code" (clique no nó abre a definição no arquivo) — exige
 parsing estático, que a gente evita de propósito (quebra com grafo dinâmico/subgrafo).
 
+## Ideias maiores levantadas em 2026-08-27 (Gabriel, sem spec ainda)
+
+- [ ] **MCP server** — expor grafo/execução/schema do `graphviwer-gp` como servidor MCP, pra
+      qualquer agente (Claude Code, ATLAS) consultar programaticamente, não só humano olhando
+      webview. Direção confirmada (é o padrão que o Gabriel já usa — `vault-query-mcp`), mas ainda
+      não desenhado: que tools expor, roda junto com a extensão ou separado.
+- [ ] **Portabilidade e manipulação de grafos/subgrafos** — três coisas juntas, ainda sem spec
+      (Gabriel pediu explicitamente pra planejar direito antes de construir):
+      1. exportar/compartilhar a estrutura do grafo (json/mermaid) sem precisar do `langgraph dev`
+         rodando pra visualizar de novo;
+      2. abrir grafo de qualquer repo com menos rigidez na convenção atual (hoje exige
+         `langgraph.json` + `.venv` no mesmo formato exato de `lg-demo`);
+      3. manipular o grafo de forma mais simples — não só visualizar, editar (escopo real ainda
+         indefinido).
+      **Não começar a construir isso sem sessão de planejamento própria primeiro.**
+
 ## Observações
 
 - Subgrafos: NÃO fazer parsing estático. Usar `GET /assistants/{id}/subgraphs` do langgraph-api
