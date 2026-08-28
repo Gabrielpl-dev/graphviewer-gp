@@ -31,8 +31,15 @@ class GraphViewProvider implements vscode.WebviewViewProvider {
     this.view?.webview.postMessage({ command: "setDiscoveredNodes", nodes });
   }
 
-  reveal(): void {
-    this.view?.show?.(true);
+  /** Garante que `resolveWebviewView` já rodou (e `this.view` existe) antes de mandar
+   * qualquer `postMessage` — sem isso, a primeira abertura do painel na sessão perde as
+   * mensagens porque o webview ainda não existe quando `openGraph` roda. */
+  async ensureResolved(): Promise<void> {
+    if (this.view) {
+      this.view.show(true);
+      return;
+    }
+    await vscode.commands.executeCommand("graphviewerGp.graphView.focus");
   }
 
   private renderHtml(webview: vscode.Webview): string {
@@ -172,10 +179,12 @@ export function activate(context: vscode.ExtensionContext): void {
   const provider = new GraphViewProvider(context.extensionUri);
 
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("graphviewerGp.graphView", provider),
+    vscode.window.registerWebviewViewProvider("graphviewerGp.graphView", provider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
     vscode.commands.registerCommand("graphviewerGp.openGraph", async (uri: vscode.Uri) => {
       const projectDir = path.dirname(uri.fsPath);
-      provider.reveal();
+      await provider.ensureResolved();
 
       const ok = await ensureGraphServerRunning(projectDir);
       if (ok) {
