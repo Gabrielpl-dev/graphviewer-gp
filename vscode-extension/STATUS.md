@@ -40,10 +40,18 @@ parsing estático, que a gente evita de propósito (quebra com grafo dinâmico/s
 
 ## Ideias maiores levantadas em 2026-08-27 (Gabriel, sem spec ainda)
 
-- [ ] **MCP server** — expor grafo/execução/schema do `graphviewer-gp` como servidor MCP, pra
+- [x] **MCP server** — spec própria escrita: `specs/SPEC-1-mcp-server.md` (escopado pra outro
+      agente trabalhar em paralelo sem colidir com esta frente). Segue aqui só o contexto original:
+      expor grafo/execução/schema do `graphviewer-gp` como servidor MCP, pra
       qualquer agente (Claude Code, ATLAS) consultar programaticamente, não só humano olhando
       webview. Direção confirmada (é o padrão que o Gabriel já usa — `vault-query-mcp`), mas ainda
       não desenhado: que tools expor, roda junto com a extensão ou separado.
+      **Motivo reforçado em 2026-08-28**: o público-alvo da ferramenta é gente que usa AI — faz
+      sentido a própria AI conseguir dirigir a ferramenta, não só o humano clicando. Caso concreto
+      vivido nesse dia: um bug real na paleta (webview não resolvido a tempo, ver
+      `specs/STATUS-node-canvas.md`) só foi achado por leitura de código às cegas, porque não existe
+      nenhuma camada programática pra abrir grafo/rodar/inspecionar sem clicar na UI do VS Code —
+      nem pro Gabriel testar rápido, nem pra mim (Claude) testar sozinho.
 - [ ] **Portabilidade e manipulação de grafos/subgrafos** — três coisas juntas, ainda sem spec
       (Gabriel pediu explicitamente pra planejar direito antes de construir):
       1. exportar/compartilhar a estrutura do grafo (json/mermaid) sem precisar do `langgraph dev`
