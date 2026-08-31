@@ -1,8 +1,16 @@
 # graphviewer-gp
 
+[![Rust](https://github.com/Gabrielpl-dev/graphviewer-gp/actions/workflows/rust.yml/badge.svg)](https://github.com/Gabrielpl-dev/graphviewer-gp/actions/workflows/rust.yml)
+[![VS Code Extension](https://github.com/Gabrielpl-dev/graphviewer-gp/actions/workflows/vscode-extension.yml/badge.svg)](https://github.com/Gabrielpl-dev/graphviewer-gp/actions/workflows/vscode-extension.yml)
+[![Python](https://github.com/Gabrielpl-dev/graphviewer-gp/actions/workflows/python-graphviewer.yml/badge.svg)](https://github.com/Gabrielpl-dev/graphviewer-gp/actions/workflows/python-graphviewer.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Viewer ao vivo de execuções [LangGraph](https://github.com/langchain-ai/langgraph) — mostra o
 grafo (nós, arestas, subgrafos) e acompanha a execução nó a nó em tempo real, sem depender de
 conta na LangSmith.
+
+> **TODO**: GIF/screenshot real da extensão em ação aqui — sem isso ninguém acredita que funciona
+> só de ler. Precisa ser gravado direto no VS Code (fora do alcance de automação).
 
 ## Por quê
 

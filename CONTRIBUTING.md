@@ -10,11 +10,13 @@ só a solução que você imaginou — às vezes tem um jeito mais simples de ch
 ## Pull requests
 
 - Um PR, uma mudança lógica — evita misturar refatoração com feature nova.
-- Se mexer no lado Rust (`app/`): `cargo check` (ou `cargo build`) tem que passar sem erro antes
-  do PR.
-- Se mexer na extensão (`vscode-extension/`): `npm run compile` tem que passar sem erro.
+- CI roda automaticamente por assunto (`.github/workflows/`) — só o stack que você mexeu:
+  - Rust (`app/`): `cargo build`, `cargo test`, `cargo clippy -- -D warnings`.
+  - Extensão (`vscode-extension/`): `npm test` (compila com `tsc --strict` e roda os testes em
+    `src/test/`).
+  - Python (`python/graphviewer/`): `pytest tests/`.
 - Se mexer no pacote Python (`python/graphviewer/`): roda o scanner contra `examples/` e confirma
-  que ainda acha as funções marcadas (`python -m graphviewer.scanner examples`).
+  que ainda acha as funções marcadas (`python -m graphviewer.scanner examples`), além do `pytest`.
 - Se mexer no servidor MCP (`vscode-extension/mcp-server/`): instala isolado (`pip install -e
   vscode-extension/mcp-server`) e testa as 4 tools contra um projeto LangGraph real — sem precisar
   abrir VS Code.
