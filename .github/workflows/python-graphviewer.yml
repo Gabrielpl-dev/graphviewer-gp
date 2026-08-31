@@ -1,0 +1,28 @@
+name: Python (graphviewer)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "python/graphviewer/**"
+      - ".github/workflows/python-graphviewer.yml"
+  pull_request:
+    paths:
+      - "python/graphviewer/**"
+      - ".github/workflows/python-graphviewer.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -e ".[test]"
+        working-directory: python/graphviewer
+
+      - run: pytest tests/ -v
+        working-directory: python/graphviewer
