@@ -143,17 +143,7 @@ pub async fn run_graph(
             let raw_event: String = buffer.drain(..pos + 2).collect();
             let raw_event = raw_event.trim();
 
-            let mut event_type = None;
-            let mut data_line = None;
-            for line in raw_event.lines() {
-                if let Some(v) = line.strip_prefix("event:") {
-                    event_type = Some(v.trim().to_string());
-                } else if let Some(v) = line.strip_prefix("data:") {
-                    data_line = Some(v.trim().to_string());
-                }
-            }
-
-            let (Some(event_type), Some(data_line)) = (event_type, data_line) else {
+            let Some((event_type, data_line)) = parse_sse_block(raw_event) else {
                 continue;
             };
             if event_type != "events" {
@@ -200,4 +190,43 @@ pub async fn run_graph(
     }
 
     let _ = tx.send(GraphEvent::RunFinished);
+}
+
+/// Extrai `(event_type, data)` de um bloco SSE já isolado (entre duas quebras duplas de linha,
+/// com `\r\n` já normalizado pra `\n` por quem chama). Função pura só pra poder testar o parsing
+/// sem precisar de um servidor de verdade.
+fn parse_sse_block(raw_event: &str) -> Option<(String, String)> {
+    let mut event_type = None;
+    let mut data_line = None;
+    for line in raw_event.trim().lines() {
+        if let Some(v) = line.strip_prefix("event:") {
+            event_type = Some(v.trim().to_string());
+        } else if let Some(v) = line.strip_prefix("data:") {
+            data_line = Some(v.trim().to_string());
+        }
+    }
+    Some((event_type?, data_line?))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_event_and_data_lines() {
+        let raw = "event: events\ndata: {\"event\":\"on_chain_start\"}";
+        let (event_type, data) = parse_sse_block(raw).expect("deveria parsear");
+        assert_eq!(event_type, "events");
+        assert_eq!(data, r#"{"event":"on_chain_start"}"#);
+    }
+
+    #[test]
+    fn none_when_only_event_no_data() {
+        assert!(parse_sse_block("event: metadata\n").is_none());
+    }
+
+    #[test]
+    fn none_when_only_data_no_event() {
+        assert!(parse_sse_block("data: {}\n").is_none());
+    }
 }

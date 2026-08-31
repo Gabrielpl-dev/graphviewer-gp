@@ -12,6 +12,9 @@ pub enum NodeStatus {
     Idle,
     Active,
     Done,
+    /// Reservado — nenhum `GraphEvent` mapeia pra esse estado ainda (o servidor não distingue
+    /// falha de um nó específico dos outros tipos de erro em `GraphEvent::Error`).
+    #[allow(dead_code)]
     Error,
 }
 

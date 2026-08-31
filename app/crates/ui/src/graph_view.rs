@@ -22,11 +22,11 @@ fn compute_layers(nodes: &[String], edges: &[(String, String)]) -> HashMap<Strin
         for (source, target) in edges {
             let Some(&layer_source) = layer.get(source) else { continue };
             let candidate = layer_source + 1;
-            if let Some(layer_target) = layer.get_mut(target) {
-                if candidate > *layer_target {
-                    *layer_target = candidate;
-                    changed = true;
-                }
+            if let Some(layer_target) = layer.get_mut(target)
+                && candidate > *layer_target
+            {
+                *layer_target = candidate;
+                changed = true;
             }
         }
         if !changed {
