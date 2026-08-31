@@ -4,6 +4,7 @@ import * as path from "node:path";
 import * as http from "node:http";
 import { ChildProcess, spawn, execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { resolveLanggraphBin, resolvePythonBin } from "./binResolver";
 
 const execFileAsync = promisify(execFile);
 
@@ -86,14 +87,6 @@ async function waitUntilHealthy(timeoutMs: number): Promise<boolean> {
 let runningProcess: ChildProcess | undefined;
 let runningProjectDir: string | undefined;
 
-function resolveLanggraphBin(projectDir: string): string | undefined {
-  const winBin = path.join(projectDir, ".venv", "Scripts", "langgraph.exe");
-  const nixBin = path.join(projectDir, ".venv", "bin", "langgraph");
-  if (fs.existsSync(winBin)) return winBin;
-  if (fs.existsSync(nixBin)) return nixBin;
-  return undefined;
-}
-
 async function ensureGraphServerRunning(projectDir: string): Promise<boolean> {
   // já tem um servidor nosso rodando pro mesmo projeto e ele responde? reusa.
   if (runningProcess && runningProjectDir === projectDir && (await probeHealthy())) {
@@ -146,14 +139,6 @@ interface DiscoveredNode {
   line: number;
   signature: string;
   docstring: string | null;
-}
-
-function resolvePythonBin(projectDir: string): string | undefined {
-  const winBin = path.join(projectDir, ".venv", "Scripts", "python.exe");
-  const nixBin = path.join(projectDir, ".venv", "bin", "python");
-  if (fs.existsSync(winBin)) return winBin;
-  if (fs.existsSync(nixBin)) return nixBin;
-  return undefined;
 }
 
 /** Roda `python -m graphviewer.scanner <projectDir>` e parseia o JSON de nós descobertos.
