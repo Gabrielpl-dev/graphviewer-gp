@@ -10,3 +10,6 @@ requires-python = ">=3.10"
 
 [project.scripts]
 graphviewer-scan = "graphviewer.scanner:main"
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
