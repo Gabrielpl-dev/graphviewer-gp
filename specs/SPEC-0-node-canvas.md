@@ -85,6 +85,47 @@ assinatura da própria função (marcada no passo de descoberta).
    modos — o que muda é só o que colore as caixas: paleta estática de nós disponíveis (Editar) vs.
    status de execução ao vivo (Observar), estilo Figma Design/Prototype. Não são painéis separados.
 
+## Referências de mercado (inspiração, não decisão tomada)
+
+Notas de pesquisa sobre como outras ferramentas resolvem partes do mesmo problema (código ↔ nó
+visual). Registradas aqui como possível inspiração pra decisões futuras desta spec — nenhuma foi
+adotada ainda.
+
+### Windmill — assinatura de função → campos de UI automáticos
+
+Windmill lê a assinatura de uma função (ex: `async function dispararEmail(to: string, texto:
+string)`) via parsing de tipos (Zod/JSON Schema) e gera dinamicamente os campos de input no
+frontend a partir dela. Relevante aqui porque é essencialmente o mesmo mecanismo já decidido no
+["Mecanismo: função marcada → nó descoberto"](#mecanismo-função-marcada--nó-descoberto) (introspecção via
+`inspect`, extrai assinatura/tipos) — vale olhar a implementação deles como referência de UX pra
+como desenhar os campos da paleta a partir dos parâmetros descobertos.
+
+### Inngest — passos sequenciais (`step.run`) com estado resiliente
+
+Padrão de escrever uma função linear onde o motor consegue pausar/retomar sem perder estado:
+
+```typescript
+export default async function meuFluxo({ step }) {
+  const usuario = await step.run('buscar-banco', () => db.users.find());
+  await step.sleep('esperar-3-dias', '3d');
+  await step.run('enviar-notificacao', () => enviarEmail(usuario.email));
+}
+```
+
+Cada `step.run` é registrado numa tabela (`step_runs` ou equivalente) — se o processo reiniciar
+durante um `step.sleep`, o estado do passo anterior já está salvo e não precisa re-executar. Só é
+relevante aqui se o graphviewer-gp algum dia cobrir grafos de execução longa (LangGraph já tem
+checkpointing próprio, então isso seria mais um paralelo conceitual que algo pra copiar direto).
+
+### Temporal — idempotência e retentativa automática por nó
+
+Ideia central (sem clonar a arquitetura de Event Sourcing do Temporal, complexa demais pra este
+projeto): tratar cada nó como uma transação isolada. Se um nó falhar (ex: "enviar webhook" com o
+sistema alvo fora do ar), o motor tenta de novo automaticamente (N tentativas, ex: 5) antes de
+marcar o nó como falho no canvas — via fila (BullMQ ou polling simples em Postgres/SQLite).
+Relacionado a uma necessidade futura de visualizar estado de falha/retry por nó no modo Observar
+(ver decisão 3, toggle Editar/Observar), ainda não coberta por esta spec.
+
 ## Fora de escopo nesta spec
 
 - Poliglota (TS/Rust/etc. como linguagem de nó).
