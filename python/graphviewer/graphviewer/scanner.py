@@ -63,6 +63,8 @@ def discover(root_dir: str) -> list[DiscoveredNode]:
             continue
 
         for _, obj in inspect.getmembers(module, inspect.isfunction):
+            if obj.__module__ != module.__name__:
+                continue
             meta = getattr(obj, REGISTRY_ATTR, None)
             if meta is None:
                 continue
