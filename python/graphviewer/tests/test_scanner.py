@@ -1,6 +1,7 @@
 """Formaliza a verificação manual feita durante o desenvolvimento: o scanner acha as funções
 marcadas com @graphviewer.node em examples/example_graph.py e ignora as não-marcadas."""
 
+import sys
 from pathlib import Path
 
 from graphviewer.scanner import discover
@@ -28,3 +29,27 @@ def test_signature_and_docstring_extracted():
 
     assert scan.signature == "(state: dict) -> dict"
     assert scan.docstring == "Faz o scan inicial do estado."
+
+
+def test_imported_node_is_discovered_only_in_defining_module(tmp_path, monkeypatch):
+    (tmp_path / "module_a.py").write_text(
+        'from graphviewer import node\n'
+        '@node("shared")\n'
+        'def shared(state: dict) -> dict:\n'
+        '    return state\n'
+    )
+    (tmp_path / "module_b.py").write_text("from module_a import shared\n")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    # O import de B também registra A em sys.modules; restaura após o teste.
+    monkeypatch.delitem(sys.modules, "module_a", raising=False)
+
+    try:
+        nodes = discover(str(tmp_path))
+    finally:
+        sys.modules.pop("module_a", None)
+
+    assert len(nodes) == 1
+    assert nodes[0].name == "shared"
+    assert nodes[0].function == "shared"
+    assert nodes[0].module == "graphviewer_scan.module_a"
+    assert nodes[0].file == "module_a.py"
